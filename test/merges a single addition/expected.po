@@ -5,6 +5,3 @@ msgstr ""
 
 msgid "Hello World"
 msgstr "Bonjour tout le monde"
-
-msgid "bye"
-msgstr "au revoir"

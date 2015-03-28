@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/beck/git-po-merge",
   "devDependencies": {
-    "jsgreat": "^0.1.5"
+    "jsgreat": "^0.1.5",
+    "mocha": "^2.2.1"
   }
 }
