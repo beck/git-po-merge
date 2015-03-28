@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/beck/git-po-merge/issues"
   },
-  "homepage": "https://github.com/beck/git-po-merge"
+  "homepage": "https://github.com/beck/git-po-merge",
+  "devDependencies": {
+    "jsgreat": "^0.1.5"
+  }
 }
