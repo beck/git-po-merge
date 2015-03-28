@@ -1,4 +1,7 @@
 #!/bin/bash
+# A git merge driver for repos with translations and i18n, the driver helps
+# resolve .po file conflicts when merging or rebasing gettext catalogs.
+# https://github.com/beck/git-po-merge
 set -eu
 
 # if additional options are ever added will need to use getopts

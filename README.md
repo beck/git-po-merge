@@ -1,22 +1,37 @@
-# po-merge
-A git merge driver for .PO files
+# git-po-merge
+
+A git merge driver for repos with translations and i18n, the driver helps
+resolve .po file conflicts when merging or rebasing gettext catalogs.
 
 
 ## Install
 
-### Install merge driver:
+Git-po-merge requires `msgcat`, a tool included when installing `gettext`.
+
+Try:
 ```
-npm install --global git-po-merge
+msgcat --version
 ```
 
-### Update git config.
+If missing and using OSX, gettext is available via homebrew:
+```
+brew install gettext
+brew link gettext --force
+```
 
-This can be done one of two ways, per-project or globally.
+### Install and update git config
+
+This can be done one of two ways, globally or per-project/directory:
 
 #### Globally
 
-Add to `~/.gitconfig`:
+Install:
+```sh
+npm install --global git-po-merge
 ```
+
+Add to `~/.gitconfig`:
+```ini
 [core]
     attributesfile = ~/.gitattributes
 [merge "pofile"]
@@ -25,22 +40,46 @@ Add to `~/.gitconfig`:
 ```
 
 Create `~/.gitattributes`:
-```
+```ini
 *.po merge=pofile
 *.pot merge=pofile
 ```
 
-#### Locally
+#### Single project / directory
 
-Add a `.gitattributes` and add merge to config.
+Install:
+```sh
+npm install git-po-merge --save-dev
+```
 
-Note, `.gitattributes` is only used after committed.
+Update git config:
+```sh
+git config merge.pofile.driver "$(npm bin)/git-po-merge %A %O %B"
+git config merge.pofile.name "custom merge driver for gettext po files"
+```
 
-### Verify git config
+Add the same `.gitattributes` where desired and commit.  
+Note `.gitattributes` is only used after committed.
+
+
+### Verify install
 
 ```
- $ git check-attr -a messages.po
-messages.po: merge: pofile
+git-po-merge  # or $(npm bin)/git-po-merge
+> usage: git-po-merge [-s] our.po base.po their.po
+
+touch messages.po
+git check-attr -a messages.po
+> messages.po: merge: pofile
+
+git-po-merge messages.po messages.po messages.po
+> Resolving po conflict with git-merge-po... done.
+
+git merge [some branch with translation changes that conflict]
+> Resolving po conflict with git-merge-po... done.
+> Resolving po conflict with git-merge-po... done.
+> Auto-merging project/locale/fr/LC_MESSAGES/messages.po
+> Auto-merging project/locale/es/LC_MESSAGES/messages.po
 ```
 
 
