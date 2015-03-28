@@ -4,26 +4,8 @@ set -eu
 ours=$1
 base=$2
 theirs=$3
-headerpo=$(mktemp -t headers.po)
-temp=$(mktemp -t temp.po)
 
 
-function debugin {
-  echo "----base $base ----"
-  cat "$base"
-  echo
-  echo "----ours $ours ----"
-  cat "$ours"
-  echo
-  echo "----theirs $theirs ----"
-  cat "$theirs"
-  echo
-}
-
-
-function debugout {
-  echo "----result----"
-  cat "$ours"
 }
 
 
@@ -44,6 +26,8 @@ function verify_msgcat {
 function resolvepo {
   echo -n "Resolving po conflict with git-merge-po... "
   local merge_opts="--sort-output --no-location --width=80"
+  local headerpo=$(mktemp -t headers.po)
+  local temp=$(mktemp -t temp.po)
 
   # remove noise from 3rd party tools
   local noise="-e /^#.Generated.by.grunt.*/d"
@@ -61,6 +45,8 @@ function resolvepo {
   echo '"MIME-Version: 1.0\n"' >> "$headerpo"
   msgcat "$headerpo" "$temp" --use-first $merge_opts --output-file="$ours"
 
+  # cleanup
+  rm -rf "$temp" "$headerpo"
 }
 
 
@@ -68,6 +54,7 @@ function rename_conflict_titles {
   # replace tempfile names with "ours", "theirs", "base"
   # msgcat shows confilcts using delimiter comments like:
   # #-#-#-#-#  .merge_file_IE83XW  #-#-#-#-#
+  local temp=$(mktemp -t temp.po)
   sed -e "s|$ours|ours|" -e "s|$theirs|theirs|" -e "s|$base|base|" "$ours" > "$temp"
   mv "$temp" "$ours"
 }
@@ -86,16 +73,7 @@ function check_for_conflicts {
   fi
 }
 
-
-function cleanup {
-  rm -f "$headerpo" "$temp"
-}
-
-
-#debugin
 verify_msgcat
 resolvepo
 rename_conflict_titles
-cleanup
-#debugout
 check_for_conflicts
