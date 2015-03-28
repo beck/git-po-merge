@@ -17,7 +17,7 @@ describe('merging', function() {
     var ours = path.join(__dirname, 'fixture', 'ours.po');
     var base = path.join(__dirname, 'fixture', 'base.po');
     var theirs = path.join(__dirname, 'fixture', 'theirs.po');
-    pomerge(ours, base, theirs);
+    pomerge(ours, base, theirs, {silent: true});
     assert.ok(true);
   });
 

@@ -1,22 +1,41 @@
 #!/bin/bash
 set -eu
 
+# if additional options are ever added will need to use getopts
+silent=false
+if [ ${1:-loud} = '-s' ]
+then
+  silent=true
+  shift
+fi
+
+if [[ -z ${1:-} ]] || [[ -z ${2:-} ]] || [[ -z ${3:-} ]]
+then
+  echo "usage: git-po-merge [-s] our.po base.po their.po"
+  exit 1
+fi
+
 ours=$1
 base=$2
 theirs=$3
 
 
+function log {
+  if [ $silent = false ]
+  then
+    echo "$@"
+  fi
 }
 
 
 function verify_msgcat {
   if ! $(msgcat --version > /dev/null 2>&1)
   then
-    echo
-    echo "ERROR in git-po-merge: msgcat is not found."
-    echo "  Installing gettext should include msgcat."
-    echo "  Falling back to three way merge."
-    echo
+    log
+    log "ERROR in git-po-merge: msgcat is not found."
+    log "  Installing gettext should include msgcat."
+    log "  Falling back to three way merge."
+    log
     git merge-file -L "ours" -L "base" -L "theirs" "$ours" "$base" "$theirs"
     exit 1
   fi
@@ -24,7 +43,7 @@ function verify_msgcat {
 
 
 function resolvepo {
-  echo -n "Resolving po conflict with git-merge-po... "
+  log -n "Resolving po conflict with git-merge-po... "
   local merge_opts="--sort-output --no-location --width=80"
   local headerpo=$(mktemp -t headers.po)
   local temp=$(mktemp -t temp.po)
@@ -64,12 +83,12 @@ function check_for_conflicts {
   # check if msgcat conflict comments are present
   if $(grep --silent "#-#-#-#-#" "$ours")
   then
-    echo
-    echo "CONFLICT, search for '#-#-#-#-#' in the po files."
-    echo
+    log
+    log "CONFLICT, search for '#-#-#-#-#' in the po files."
+    log
     exit 1
   else
-    echo "done."
+    log "done."
   fi
 }
 
