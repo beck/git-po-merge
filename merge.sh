@@ -48,8 +48,8 @@ function verify_msgcat {
 function resolvepo {
   log -n "Resolving po conflict with git-merge-po... "
   local merge_opts="--sort-output --no-location --width=80"
-  local headerpo=$(mktemp -t headers.po)
-  local temp=$(mktemp -t temp.po)
+  local headerpo=$(mktemp -t headers.XXXXXX.po)
+  local temp=$(mktemp -t temp.XXXXXX.po)
 
   # remove noise from 3rd party tools
   local noise="-e /^#.Generated.by.grunt.*/d"
@@ -76,7 +76,7 @@ function rename_conflict_titles {
   # replace tempfile names with "ours", "theirs", "base"
   # msgcat shows confilcts using delimiter comments like:
   # #-#-#-#-#  .merge_file_IE83XW  #-#-#-#-#
-  local temp=$(mktemp -t temp.po)
+  local temp=$(mktemp -t temp.XXXXXX.po)
   sed -e "s|$ours|ours|" -e "s|$theirs|theirs|" -e "s|$base|base|" "$ours" > "$temp"
   mv "$temp" "$ours"
 }
