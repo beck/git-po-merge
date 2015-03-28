@@ -27,6 +27,20 @@ function debugout {
 }
 
 
+function verify_msgcat {
+  if ! $(msgcat --version > /dev/null 2>&1)
+  then
+    echo
+    echo "ERROR in git-po-merge: msgcat is not found."
+    echo "  Installing gettext should include msgcat."
+    echo "  Falling back to three way merge."
+    echo
+    git merge-file -L "ours" -L "base" -L "theirs" "$ours" "$base" "$theirs"
+    exit 1
+  fi
+}
+
+
 function resolvepo {
   echo -n "Resolving po conflict with git-merge-po... "
   local merge_opts="--sort-output --no-location --width=80"
@@ -79,6 +93,7 @@ function cleanup {
 
 
 #debugin
+verify_msgcat
 resolvepo
 rename_conflict_titles
 cleanup
