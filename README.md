@@ -1,4 +1,6 @@
 # git-po-merge
+[![Build Status](https://travis-ci.org/beck/git-po-merge.svg?branch=master)](https://travis-ci.org/beck/git-po-merge)
+[![npm version](https://badge.fury.io/js/git-po-merge.svg)](http://badge.fury.io/js/git-po-merge)
 
 A git merge driver for repos with translations and i18n, the driver helps
 resolve .po file conflicts when merging or rebasing gettext catalogs.
