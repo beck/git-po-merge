@@ -51,8 +51,9 @@ function resolvepo {
   local headerpo=$(mktemp -t headers.XXXXXX.po)
   local temp=$(mktemp -t temp.XXXXXX.po)
 
-  # remove noise from 3rd party tools
+  # fix gettext nonsense and noise from 3rd party tools
   local noise="-e /^#.Generated.by.grunt.*/d"
+  noise="$noise -e s/charset=CHARSET/charset=UTF-8/"
   cp "$ours" "$temp" && sed $noise "$temp" > "$ours"
   cp "$base" "$temp" && sed $noise "$temp" > "$base"
   cp "$theirs" "$temp" && sed $noise "$temp" > "$theirs"
