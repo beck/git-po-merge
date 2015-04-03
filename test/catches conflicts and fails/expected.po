@@ -1,0 +1,12 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"MIME-Version: 1.0\n"
+
+#, fuzzy
+msgid "hello"
+msgstr ""
+"#-#-#-#-#  ours.po  #-#-#-#-#\n"
+"bonjour\n"
+"#-#-#-#-#  theirs.po  #-#-#-#-#\n"
+"salut"
