@@ -12,7 +12,7 @@ then
   shift
 fi
 
-if [[ -z ${1:-} ]] || [[ -z ${2:-} ]] || [[ -z ${3:-} ]]
+if [ $# -ne 3 ]
 then
   echo "usage: git-po-merge [-s] our.po base.po their.po"
   exit 1
