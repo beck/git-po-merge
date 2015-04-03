@@ -30,15 +30,18 @@ function log {
   fi
 }
 
+function elog {
+  log "$@" >&2
+}
 
 function verify_msgcat {
   if ! $(msgcat --version > /dev/null 2>&1)
   then
-    log
-    log "ERROR in git-po-merge: msgcat is not found."
-    log "  Installing gettext should include msgcat."
-    log "  Falling back to three way merge."
-    log
+    elog
+    elog "ERROR in git-po-merge: msgcat is not found."
+    elog "  Installing gettext should include msgcat."
+    elog "  Falling back to three way merge."
+    elog
     git merge-file -L "ours" -L "base" -L "theirs" "$ours" "$base" "$theirs"
     exit 1
   fi
@@ -87,9 +90,9 @@ function check_for_conflicts {
   # check if msgcat conflict comments are present
   if $(grep --silent "#-#-#-#-#" "$ours")
   then
-    log
-    log "CONFLICT, search for '#-#-#-#-#' in the po files."
-    log
+    elog
+    elog "CONFLICT, search for '#-#-#-#-#' in the po files."
+    elog
     exit 1
   else
     log "done."
