@@ -69,6 +69,8 @@ function resolvepo {
   echo 'msgstr ""' >> "$headerpo"
   echo '"Content-Type: text/plain; charset=UTF-8\n"' >> "$headerpo"
   echo '"MIME-Version: 1.0\n"' >> "$headerpo"
+  grep -m 1 -e '^\"Language:\s[a-z]*\\n\"$' "$ours" >> "$headerpo"
+  grep -m 1 -e '^\"Plural-Forms:\s.*\\n\"$' "$ours" >> "$headerpo"
   msgcat "$headerpo" "$temp" --use-first $merge_opts --output-file="$ours"
 
   # cleanup
