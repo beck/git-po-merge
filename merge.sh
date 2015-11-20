@@ -47,6 +47,13 @@ function verify_msgcat {
   fi
 }
 
+function get_langheader {
+    grep -m 1 -e '^\"Language:\s[a-z]*\\n\"$' "$ours"
+}
+
+function get_pluralheader {
+    grep -m 1 -e '^\"Plural-Forms:\s.*\\n\"$' "$ours"
+}
 
 function resolvepo {
   log -n "Resolving po conflict with git-merge-po... "
@@ -69,9 +76,8 @@ function resolvepo {
   echo 'msgstr ""' >> "$headerpo"
   echo '"Content-Type: text/plain; charset=UTF-8\n"' >> "$headerpo"
   echo '"MIME-Version: 1.0\n"' >> "$headerpo"
-
-  [[ ! -z "${lang=$(grep -m 1 -e '^\"Language:\s[a-z]*\\n\"$' "$ours")}" ]] && echo "$lang" >> "$headerpo"
-  [[ ! -z "${plural_forms=$(grep -m 1 -e '^\"Plural-Forms:\s.*\\n\"$' "$ours")}" ]] && echo "$plural_forms" >> "$headerpo"
+  echo "$(get_langheader)" >> "$headerpo"
+  echo "$(get_pluralheader)" >> "$headerpo"
 
   msgcat "$headerpo" "$temp" --use-first $merge_opts --output-file="$ours"
 
