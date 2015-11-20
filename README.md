@@ -98,6 +98,7 @@ any merge or rebase.
 ## Dev
 
 ```
+node --version # using v0.12
 npm install --global .
 npm link
 npm test
