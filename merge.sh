@@ -48,7 +48,7 @@ function verify_msgcat {
 }
 
 function get_langheader {
-    grep -m 1 -e '^\"Language:\s[a-z]*\\n\"$' "$ours"
+    grep -m 1 -e '^\"Language:\s.*\\n\"$' "$ours"
 }
 
 function get_pluralheader {
