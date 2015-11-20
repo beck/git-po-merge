@@ -1,6 +1,6 @@
 {
   "name": "git-po-merge",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A git merge driver for Gettext .PO files",
   "bin": "merge.sh",
   "main": "index.js",
