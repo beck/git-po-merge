@@ -1,115 +1,64 @@
-#!/bin/bash
-# A git merge driver for repos with translations and i18n, the driver helps
-# resolve .po file conflicts when merging or rebasing gettext catalogs.
-# https://github.com/beck/git-po-merge
-set -eu
+#!/usr/bin/env bash
+# Three-way gettext PO merge, adapted from Mikko Rantalainen (2021), MIT.
+# https://stackoverflow.com/a/68799310
+# Preserves the complete local PO header/preamble byte-for-byte.
+set -Eeuo pipefail
 
-# if additional options are ever added will need to use getopts
-silent=false
-if [ ${1:-loud} = '-s' ]
-then
-  silent=true
-  shift
+if (( $# < 3 || $# > 4 )); then
+    echo "Usage: $0 LOCAL BASE OTHER [PATH]" >&2
+    exit 2
 fi
+LOCAL=$1
+BASE=$2
+OTHER=$3
+FILENAME=${4:-$LOCAL}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+TMPDIR_PO=$(mktemp -d)
+trap 'rm -rf -- "$TMPDIR_PO"' EXIT
 
-if [ $# -ne 3 ]
-then
-  echo "usage: git-po-merge [-s] our.po base.po their.po"
-  exit 1
+for tool in msguniq msgcat msgmerge msggrep msgattrib python3; do
+    if ! command -v "$tool" >/dev/null; then
+        echo "Missing required command: $tool" >&2
+        exit 2
+    fi
+done
+
+apply_template() { msgmerge --force-po --quiet --no-fuzzy-matching "$@"; }
+only_conflicts() { msggrep --msgstr -F -e '#-#-#-#-#' -; }
+without_conflicts() { msggrep -v --msgstr -F -e '#-#-#-#-#' -; }
+extract_changes() {
+    msgcat -o - "$1" "$2" \
+        | only_conflicts \
+        | apply_template -o - "$1" - \
+        | msgattrib --no-obsolete
+}
+
+printf 'Merging PO: %s\n' "$FILENAME" >&2
+msguniq --force-po --unique -o "$TMPDIR_PO/base" "$BASE"
+msguniq --force-po --unique -o "$TMPDIR_PO/local" "$LOCAL"
+msguniq --force-po --unique -o "$TMPDIR_PO/other" "$OTHER"
+
+msgcat --force-po -o - "$TMPDIR_PO/base" "$TMPDIR_PO/local" "$TMPDIR_PO/other" \
+    | without_conflicts > "$TMPDIR_PO/unchanged"
+extract_changes "$TMPDIR_PO/local" "$TMPDIR_PO/base" > "$TMPDIR_PO/local-changes"
+extract_changes "$TMPDIR_PO/other" "$TMPDIR_PO/base" > "$TMPDIR_PO/other-changes"
+
+msgcat --force-po -o - "$TMPDIR_PO/other-changes" "$TMPDIR_PO/local-changes" \
+    | only_conflicts > "$TMPDIR_PO/conflicts"
+msgcat --force-po --unique -o "$TMPDIR_PO/local-only" "$TMPDIR_PO/local-changes" "$TMPDIR_PO/conflicts"
+msgcat --force-po --unique -o "$TMPDIR_PO/other-only" "$TMPDIR_PO/other-changes" "$TMPDIR_PO/conflicts"
+msgcat --force-po -o "$TMPDIR_PO/merge1" "$TMPDIR_PO/unchanged" \
+    "$TMPDIR_PO/conflicts" "$TMPDIR_PO/local-only" "$TMPDIR_PO/other-only"
+msgcat --force-po -o - "$TMPDIR_PO/local" "$TMPDIR_PO/other" \
+    | apply_template -o "$TMPDIR_PO/merge2" "$TMPDIR_PO/merge1" -
+
+# Do not pass the original header through msgcat; that loses some metadata.
+python3 "$SCRIPT_DIR/preserve-po-header.py" "$LOCAL" "$TMPDIR_PO/merge2" "$TMPDIR_PO/merged"
+# Only overwrite Git's %A after generating a complete output.
+cp -- "$TMPDIR_PO/merged" "$LOCAL"
+
+if grep -q -- '#-#-#-#-#' "$LOCAL"; then
+    echo "PO translation conflicts detected in $FILENAME (search for #-#-#-#-#)." >&2
+    exit 1
 fi
-
-ours=$1
-base=$2
-theirs=$3
-
-
-function log {
-  if [ $silent = false ]
-  then
-    echo "$@"
-  fi
-}
-
-function elog {
-  log "$@" >&2
-}
-
-function verify_msgcat {
-  if ! $(msgcat --version > /dev/null 2>&1)
-  then
-    elog
-    elog "ERROR in git-po-merge: msgcat is not found."
-    elog "  Installing gettext should include msgcat."
-    elog "  Falling back to three way merge."
-    elog
-    git merge-file -L "ours" -L "base" -L "theirs" "$ours" "$base" "$theirs"
-    exit 1
-  fi
-}
-
-function get_langheader {
-    grep -m 1 -e '^\"Language:\s.*\\n\"$' "$ours"
-}
-
-function get_pluralheader {
-    grep -m 1 -e '^\"Plural-Forms:\s.*\\n\"$' "$ours"
-}
-
-function resolvepo {
-  log -n "Resolving po conflict with git-merge-po... "
-  local merge_opts="--sort-output --no-location --width=80"
-  local headerpo=$(mktemp -t headers.XXXXXX.po)
-  local temp=$(mktemp -t temp.XXXXXX.po)
-
-  # fix gettext nonsense and noise from 3rd party tools
-  local noise="-e /^#.Generated.by.grunt.*/d"
-  noise="$noise -e s/charset=CHARSET/charset=UTF-8/"
-  cp "$ours" "$temp" && sed $noise "$temp" > "$ours"
-  cp "$base" "$temp" && sed $noise "$temp" > "$base"
-  cp "$theirs" "$temp" && sed $noise "$temp" > "$theirs"
-
-  # reduce all three to a single file
-  msgcat "$base" "$ours" "$theirs" $merge_opts --output-file="$temp"
-
-  # set a minimalist header
-  echo 'msgid ""' >> "$headerpo"
-  echo 'msgstr ""' >> "$headerpo"
-  echo '"Content-Type: text/plain; charset=UTF-8\n"' >> "$headerpo"
-  echo '"MIME-Version: 1.0\n"' >> "$headerpo"
-  echo "$(get_langheader)" >> "$headerpo"
-  echo "$(get_pluralheader)" >> "$headerpo"
-
-  msgcat "$headerpo" "$temp" --use-first $merge_opts --output-file="$ours"
-
-  # cleanup
-  rm -rf "$temp" "$headerpo"
-}
-
-
-function rename_conflict_titles {
-  # replace tempfile names with "ours", "theirs", "base"
-  # msgcat shows confilcts using delimiter comments like:
-  # #-#-#-#-#  .merge_file_IE83XW  #-#-#-#-#
-  local temp=$(mktemp -t temp.XXXXXX.po)
-  sed -e "s|$ours|ours|" -e "s|$theirs|theirs|" -e "s|$base|base|" "$ours" > "$temp"
-  mv "$temp" "$ours"
-}
-
-
-function check_for_conflicts {
-  # check if msgcat conflict comments are present
-  if $(grep --silent "#-#-#-#-#" "$ours")
-  then
-    elog
-    elog "CONFLICT, search for '#-#-#-#-#' in the po files."
-    elog
-    exit 1
-  else
-    log "done."
-  fi
-}
-
-verify_msgcat
-resolvepo
-rename_conflict_titles
-check_for_conflicts
+exit 0
