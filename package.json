@@ -1,12 +1,22 @@
 {
   "name": "git-po-merge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A git merge driver for Gettext .PO files",
-  "bin": "merge.sh",
+  "bin": {
+    "git-po-merge": "./merge.sh"
+  },
   "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
+  "files": [
+    "merge.sh",
+    "index.js",
+    "preserve-po-header.py",
+    "normalize-po-charset.py",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/beck/git-po-merge.git"
@@ -20,7 +30,7 @@
     "translations",
     "i18n"
   ],
-  "author": "Doug Beck",
+  "author": "Doug Beck and Mikko Rantalainen",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/beck/git-po-merge/issues"
