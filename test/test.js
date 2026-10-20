@@ -45,12 +45,15 @@ describe('git-po-merge', function() {
         pomerge(ours, base, theirs, {silent: true});
       } catch(e) {
         failed = true;
+        if (!shouldFail) {
+          console.error(`Unexpected merge failure in ${dir}:`);
+        }
       }
       var merged = fs.readFileSync(ours).toString();
       expected = fs.readFileSync(expected).toString();
 
-      assert.equal(shouldFail, failed);
-      assert.equal(merged, expected);
+      assert.strictEqual(failed, shouldFail, `Unexpected merge exit status for ${ours}`);
+      assert.strictEqual(merged, expected);
 
     });
 
