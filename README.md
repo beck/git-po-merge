@@ -1,4 +1,4 @@
-# git-po-merge
+# git-po-merge (Three-way PO merge driver)
 [![Build Status](https://travis-ci.org/beck/git-po-merge.svg?branch=master)](https://travis-ci.org/beck/git-po-merge)
 [![npm version](https://badge.fury.io/js/git-po-merge.svg)](http://badge.fury.io/js/git-po-merge)
 
@@ -8,7 +8,7 @@ resolve .po file conflicts when merging or rebasing gettext catalogs.
 
 ## Install
 
-Git-po-merge requires `msgcat`, a tool included when installing `gettext`.
+Git-po-merge requires: GNU `gettext` (`msgcat`, `msguniq`, `msgmerge`, `msggrep`, `msgattrib`), Python 3, bash.
 
 Try:
 ```
@@ -37,8 +37,14 @@ Add to `~/.gitconfig`:
 [core]
     attributesfile = ~/.gitattributes
 [merge "pofile"]
-    name = custom merge driver for gettext po files
-    driver = git-po-merge %A %O %B
+    name = Three-way gettext PO merge
+    driver = git-po-merge %A %O %B %P
+```
+
+via:
+```bash
+git config --local merge.pofile.name 'Three-way gettext PO merge'
+git config --local merge.pofile.driver 'git-po-merge %A %O %B %P'
 ```
 
 Create `~/.gitattributes`:
@@ -84,6 +90,25 @@ git merge [some branch with translation changes that conflict]
 > Auto-merging project/locale/es/LC_MESSAGES/messages.po
 ```
 
+To check the configured driver:
+
+```sh
+git config --get merge.pofile.driver
+git check-attr merge diff -- path/to/file.po
+```
+
+Important: The original local-side header, including its leading comments, SPDX
+metadata, header fields and formatting, is preserved verbatim. Remote-side
+header edits are intentionally NOT merged. Review the header if both branches
+modify header fields. This driver is not lossless for conflicting obsolete
+translations or fuzzy msgid renames. Inspect its results before using broadly.
+
+To validate a result:
+
+```sh
+msgfmt --check --check-format -o /dev/null path/to/file.po
+git diff --no-ext-diff --no-textconv -- '*.po'
+```
 
 ## Notes and caveats
 
