@@ -8,7 +8,7 @@ resolve .po file conflicts when merging or rebasing gettext catalogs.
 
 ## Install
 
-Git-po-merge requires: GNU `gettext` (`msgcat`, `msguniq`, `msgmerge`, `msggrep`, `msgattrib`), Python 3, bash.
+Git-po-merge requires: GNU `gettext` (`msgcat`, `msguniq`, `msgmerge`, `msggrep`, `msgattrib`), Python 3, `python3-polib`, bash.
 
 Try:
 ```
